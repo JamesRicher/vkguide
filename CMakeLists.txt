@@ -1,13 +1,15 @@
 ﻿# CMakeList.txt : CMake project for vulkan_guide, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 4.0)
 
 project ("vulkan_guide")
 
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Vulkan REQUIRED)
+find_package(SDL2 REQUIRED CONFIG)
+find_package(fmt REQUIRED)
 
 add_subdirectory(third_party)
 

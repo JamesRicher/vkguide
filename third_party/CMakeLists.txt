@@ -1,5 +1,3 @@
-find_package(Vulkan REQUIRED)
-
 add_library(vkbootstrap STATIC)
 add_library(glm INTERFACE)
 add_library(vma INTERFACE)
@@ -28,20 +26,8 @@ target_sources(tinyobjloader PRIVATE
 target_include_directories(tinyobjloader PUBLIC tinyobjloader)
 
 
-add_library(sdl2 INTERFACE)
-set(sdl2_DIR "SDL_PATH" CACHE PATH "Path to SDL2")
-
-if (WIN32)
-target_include_directories(sdl2 INTERFACE ${sdl2_DIR}/include ${sdl2_image_DIR}/include)
-target_link_directories(sdl2 INTERFACE ${sdl2_DIR}/lib/x64 ${sdl2_image_DIR}/lib/x64)
-elseif (UNIX)
-target_include_directories(sdl2 INTERFACE ${sdl2_DIR}/include/SDL2 ${sdl2_image_DIR}/include/SDL2)
-target_link_directories(sdl2 INTERFACE ${sdl2_DIR}/lib ${sdl2_image_DIR}/lib)
-endif()
-
-target_link_libraries(sdl2 INTERFACE SDL2 SDL2main)
-
 add_library(imgui STATIC)
+target_compile_options(imgui PRIVATE $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-nontrivial-memcall>)
 
 target_include_directories(imgui PUBLIC imgui)
 
@@ -57,6 +43,7 @@ target_sources(imgui PRIVATE
     imgui/imgui_impl_sdl.cpp
     )
 
-target_link_libraries(imgui PUBLIC Vulkan::Vulkan sdl2)
+
+target_link_libraries(imgui PUBLIC Vulkan::Vulkan SDL2::SDL2)
 
 target_include_directories(stb_image INTERFACE stb_image)
