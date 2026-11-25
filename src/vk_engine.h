@@ -10,7 +10,7 @@ struct FrameData
     VkCommandPool _commandPool;
     VkCommandBuffer _mainCommandBuffer;
 
-    VkSemaphore _swapchainSemaphore, _renderSemaphore;
+    VkSemaphore _swapchainSemaphore;
     VkFence _renderFence;
 };
 
@@ -58,6 +58,8 @@ public:
 
     VkQueue _graphicsQueue;
     uint32_t _graphicsQueueFamily;
+
+    std::vector<VkSemaphore> _renderSemaphores;
 
 private:
     void init_vulkan();

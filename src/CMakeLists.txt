@@ -1,3 +1,4 @@
+option(APP_ENABLE_VALIDATION_LAYERS "Enable Vulkan's validation layers" ON)
 
 # Add source to this project's executable.
 add_executable(vulkan_guide
@@ -18,3 +19,7 @@ target_link_libraries(vulkan_guide vkbootstrap vma glm tinyobjloader imgui stb_i
 target_link_libraries(vulkan_guide Vulkan::Vulkan SDL2::SDL2 fmt::fmt)
 
 add_dependencies(vulkan_guide Shaders)
+
+target_compile_definitions(vulkan_guide PRIVATE
+    APP_ENABLE_VALIDATION_LAYERS=$<BOOL:${APP_ENABLE_VALIDATION_LAYERS}>
+)

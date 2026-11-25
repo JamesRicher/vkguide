@@ -32,4 +32,10 @@
         } \
     } while(0) \
 
+#ifdef NDEBUG
+    #define LOG_DEBUG(...) ((void)0)
+#else
+    #define LOG_DEBUG(...) fmt::print(__VA_ARGS__)
+#endif
+
 //we will add our main reusable types here

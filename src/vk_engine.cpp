@@ -13,7 +13,8 @@
 #include <chrono>
 #include <thread>
 
-constexpr bool bUseValidationLayers = true;
+constexpr bool bUseValidationLayers = APP_ENABLE_VALIDATION_LAYERS;
+
 VulkanEngine* loadedEngine = nullptr;
 
 VulkanEngine& VulkanEngine::Get() { return *loadedEngine; }
@@ -111,6 +112,10 @@ void VulkanEngine::create_swapchain(uint32_t width, uint32_t height)
     _swapchain = vkbSwapchain.swapchain;
     _swapchainImages = vkbSwapchain.get_images().value();
     _swapchainImageViews = vkbSwapchain.get_image_views().value();
+    
+    _renderSemaphores = std::vector<VkSemaphore>(_swapchainImages.size());
+
+    LOG_DEBUG("Swapchain created: {} images, {}x{}\n", _swapchainImages.size(), _swapchainExtent.width, _swapchainExtent.height);
 }
 
 void VulkanEngine::init_swapchain()
@@ -155,8 +160,13 @@ void VulkanEngine::init_sync_structures()
     {
         VK_CHECK(vkCreateFence(_device, &fenceCreateInfo, nullptr, &_frames[i]._renderFence));
 
-        VK_CHECK(vkCreateSemaphore(_device, &semaphoreCreateInfo, nullptr, &_frames[i]._renderSemaphore));
         VK_CHECK(vkCreateSemaphore(_device, &semaphoreCreateInfo, nullptr, &_frames[i]._swapchainSemaphore));
+    }
+
+    // create the per swapchain image render semaphores
+    for (size_t i = 0; i < _swapchainImages.size(); i++)
+    {
+        VK_CHECK(vkCreateSemaphore(_device, &semaphoreCreateInfo, nullptr, &_renderSemaphores[i]));
     }
 }
 
@@ -175,8 +185,12 @@ void VulkanEngine::cleanup()
 
             // destroy sync objects
             vkDestroyFence(_device, _frames[i]._renderFence, nullptr);
-            vkDestroySemaphore(_device, _frames[i]._renderSemaphore, nullptr);
             vkDestroySemaphore(_device, _frames[i]._swapchainSemaphore, nullptr);
+        }
+
+        for (size_t i=0; i < _swapchainImages.size(); i++)
+        {
+            vkDestroySemaphore(_device, _renderSemaphores[i], nullptr);
         }
 
         destroy_swapchain();
@@ -195,8 +209,10 @@ void VulkanEngine::cleanup()
 
 void VulkanEngine::draw()
 {
+    // wait for the previous frame to finish rendering before proceeding to record the commands for the next frame
     VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true, 1000000000));
     VK_CHECK(vkResetFences(_device, 1, &get_current_frame()._renderFence)); // we must reset a fence between GPU uses
+
 
     uint32_t swapchainImageIndex;
     VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1000000000, get_current_frame()._swapchainSemaphore, nullptr, &swapchainImageIndex));
@@ -229,7 +245,7 @@ void VulkanEngine::draw()
     );
     VkSemaphoreSubmitInfo signalInfo = vkinit::semaphore_submit_info(
         VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
-        get_current_frame()._renderSemaphore
+        _renderSemaphores[swapchainImageIndex]
     );
     VkSubmitInfo2 submit = vkinit::submit_info(&cmdInfo, &signalInfo, &waitInfo);
     
@@ -241,7 +257,7 @@ void VulkanEngine::draw()
     presentInfo.pSwapchains = &_swapchain;
     presentInfo.swapchainCount = 1;
 
-    presentInfo.pWaitSemaphores = &get_current_frame()._renderSemaphore;
+    presentInfo.pWaitSemaphores = &_renderSemaphores[swapchainImageIndex];
     presentInfo.waitSemaphoreCount = 1;
 
     presentInfo.pImageIndices = &swapchainImageIndex;
