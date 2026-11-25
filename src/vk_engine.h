@@ -2,6 +2,7 @@
 
 #include <vk_types.h>
 #include <vector>
+#include <deletion_queue.h>
 
 struct SDL_Window; // fwd declaration
 
@@ -12,6 +13,8 @@ struct FrameData
 
     VkSemaphore _swapchainSemaphore;
     VkFence _renderFence;
+
+    DeletionQueue _deletionQueue;
 };
 
 constexpr unsigned int FRAME_OVERLAP = 2;
@@ -61,6 +64,12 @@ public:
 
     std::vector<VkSemaphore> _renderSemaphores;
 
+    DeletionQueue _mainDeletionQueue;
+
+    VmaAllocator _allocator;
+    AllocatedImage _drawImage;
+    VkExtent2D _drawExtent;
+
 private:
     void init_vulkan();
     void init_swapchain();
@@ -69,4 +78,6 @@ private:
 
     void create_swapchain(uint32_t width, uint32_t height);
     void destroy_swapchain();
+
+    void draw_background(VkCommandBuffer cmd);
 };

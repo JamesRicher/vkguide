@@ -39,3 +39,12 @@
 #endif
 
 //we will add our main reusable types here
+
+struct AllocatedImage
+{
+    VkImage image;
+    VkImageView imageView;
+    VmaAllocation allocation;
+    VkExtent3D imageExtent;
+    VkFormat imageFormat;
+};
